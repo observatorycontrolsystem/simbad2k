@@ -3,6 +3,17 @@ from flask import Flask, jsonify
 app = Flask(__name__)
 
 
+class PlanetQuery(object):
+    def __init__(self, query):
+        self.query = query.lower()
+
+    def get_result(self):
+        import json
+        with open('planets.json', 'r') as planets:
+            p_json = json.loads(planets.read())
+        return p_json.get(self.query)
+
+
 class SimbadQuery(object):
     def __init__(self, query):
         from astroquery.simbad import Simbad
@@ -18,8 +29,7 @@ class SimbadQuery(object):
                 if str(result[key][0]) != '--':
                     ret_dict[key.lower()] = result[key][0]
             return ret_dict
-        else:
-            return None
+        return None
 
 
 class MPCQuery(object):
@@ -37,11 +47,11 @@ class MPCQuery(object):
         auth = ('mpc_ws', 'mpc!!ws')
         result = requests.post(url=url, params=params, auth=auth).json()
         if result:
-            return {k: result[0][k] for k in self.keys}
+            return {k: float(result[0][k]) for k in self.keys}
         return None
 
 
-QUERY_CLASSES = [SimbadQuery, MPCQuery]
+QUERY_CLASSES = [PlanetQuery, SimbadQuery, MPCQuery]
 
 
 @app.route('/<query>/')
