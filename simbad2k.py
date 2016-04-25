@@ -22,7 +22,26 @@ class SimbadQuery(object):
             return None
 
 
-QUERY_CLASSES = [SimbadQuery]
+class MPCQuery(object):
+    def __init__(self, query):
+        self.query = query
+        self.keys = [
+            'argument_of_perihelion', 'ascending_node', 'eccentricity',
+            'inclination', 'mean_anomaly', 'semimajor_axis',
+        ]
+
+    def get_result(self):
+        import requests
+        url = 'http://mpc.cfa.harvard.edu/ws/search'
+        params = {'name': self.query, 'json': 1}
+        auth = ('mpc_ws', 'mpc!!ws')
+        result = requests.post(url=url, params=params, auth=auth).json()
+        if result:
+            return {k: result[0][k] for k in self.keys}
+        return None
+
+
+QUERY_CLASSES = [SimbadQuery, MPCQuery]
 
 
 @app.route('/<query>/')
