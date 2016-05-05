@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from flask import Flask, jsonify
 from astroquery.exceptions import RemoteServiceError
+from werkzeug.contrib.cache import SimpleCache
+cache = SimpleCache()
 app = Flask(__name__)
 
 
@@ -73,11 +75,15 @@ QUERY_CLASSES = [PlanetQuery, SimbadQuery, MPCQuery, NEDQuery]
 
 @app.route('/<query>/')
 def root(query):
-    for query_class in QUERY_CLASSES:
-        result = query_class(query).get_result()
-        if result:
-            return jsonify(**result)
-    return jsonify({'error': 'No match found'})
+    result = cache.get(query)
+    if not result:
+        for query_class in QUERY_CLASSES:
+            result = query_class(query).get_result()
+            if result:
+                cache.set(query, result)
+                return jsonify(**result)
+        return jsonify({'error': 'No match found'})
+    return jsonify(**result)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)
