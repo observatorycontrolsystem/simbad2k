@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from flask import Flask, jsonify
+from astroquery.exceptions import RemoteServiceError
 app = Flask(__name__)
 
 
@@ -51,7 +52,23 @@ class MPCQuery(object):
         return None
 
 
-QUERY_CLASSES = [PlanetQuery, SimbadQuery, MPCQuery]
+class NEDQuery(object):
+    def __init__(self, query):
+        self.query = query
+
+    def get_result(self):
+        from astroquery.ned import Ned
+        ret_dict = {}
+        try:
+            result_table = Ned.query_object(self.query)
+        except RemoteServiceError:
+            return None
+        ret_dict['ra_d'] = result_table['RA(deg)'][0]
+        ret_dict['dec_d'] = result_table['DEC(deg)'][0]
+        return ret_dict
+
+
+QUERY_CLASSES = [PlanetQuery, SimbadQuery, MPCQuery, NEDQuery]
 
 
 @app.route('/<query>/')
