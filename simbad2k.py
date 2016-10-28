@@ -80,10 +80,14 @@ def root(query):
         for query_class in QUERY_CLASSES:
             result = query_class(query).get_result()
             if result:
-                cache.set(query, result)
+                cache.set(query, result, timeout=60 * 60 * 60)
                 return jsonify(**result)
         return jsonify({'error': 'No match found'})
     return jsonify(**result)
+
+@app.route('/')
+def index():
+    return 'This is simbad2k. To query for an object, use /&lt;object&gt;/. Ex: <a href="/m51/">/m51/</a>'
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)
