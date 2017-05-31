@@ -29,7 +29,7 @@ class SimbadQuery(object):
         if result:
             ret_dict = {}
             for key in ['RA', 'DEC', 'RA_d', 'DEC_d', 'PMRA', 'PMDEC']:
-                if str(result[key][0]) != '--':
+                if str(result[key][0]) not in ['--', '']:
                     ret_dict[key.lower()] = result[key][0]
             return ret_dict
         return None
@@ -45,7 +45,7 @@ class MPCQuery(object):
 
     def get_result(self):
         import requests
-        url = 'http://mpc.cfa.harvard.edu/ws/search'
+        url = 'http://minorplanetcenter.net/web_service/search_orbits'
         params = {'name': self.query, 'json': 1}
         auth = ('mpc_ws', 'mpc!!ws')
         result = requests.post(url=url, params=params, auth=auth).json()
@@ -85,9 +85,11 @@ def root(query):
         return jsonify({'error': 'No match found'})
     return jsonify(**result)
 
+
 @app.route('/')
 def index():
     return 'This is simbad2k. To query for an object, use /&lt;object&gt;/. Ex: <a href="/m51/">/m51/</a>'
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)
