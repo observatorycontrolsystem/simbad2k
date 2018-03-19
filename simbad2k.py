@@ -1,9 +1,11 @@
 #!/usr/bin/env python
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
+from flask_cors import CORS
 from astroquery.exceptions import RemoteServiceError
-from werkzeug.contrib.cache import SimpleCache
+from werkzeug.contrib.cache import SimpleCache, NullCache
 cache = SimpleCache()
 app = Flask(__name__)
+CORS(app)
 
 
 class PlanetQuery(object):
@@ -26,6 +28,7 @@ class SimbadQuery(object):
 
     def get_result(self):
         result = self.simbad.query_object(self.query)
+        print(result)
         if result:
             ret_dict = {}
             for key in ['RA', 'DEC', 'RA_d', 'DEC_d', 'PMRA', 'PMDEC']:
@@ -40,15 +43,14 @@ class MPCQuery(object):
         self.query = query
         self.keys = [
             'argument_of_perihelion', 'ascending_node', 'eccentricity',
-            'inclination', 'mean_anomaly', 'semimajor_axis',
+            'inclination', 'mean_anomaly', 'semimajor_axis', 'perihelion_date_jd',
+            'epoch_jd', 'perihelion_distance'
         ]
 
     def get_result(self):
-        import requests
-        url = 'http://minorplanetcenter.net/web_service/search_orbits'
-        params = {'name': self.query, 'json': 1}
-        auth = ('mpc_ws', 'mpc!!ws')
-        result = requests.post(url=url, params=params, auth=auth).json()
+        from astroquery.mpc import MPC
+        params = {'name': self.query}
+        result = MPC.query_object_async(**params).json()
         if result:
             return {k: float(result[0][k]) for k in self.keys}
         return None
@@ -69,15 +71,18 @@ class NEDQuery(object):
         ret_dict['dec_d'] = result_table['DEC(deg)'][0]
         return ret_dict
 
+SIDEREAL_QUERY_CLASSES = [SimbadQuery, NEDQuery]
+NON_SIDEREAL_QUERY_CLASSES = [PlanetQuery, MPCQuery]
 
-QUERY_CLASSES = [PlanetQuery, SimbadQuery, MPCQuery, NEDQuery]
-
-
-@app.route('/<query>/')
+@app.route('/<query>')
 def root(query):
-    result = cache.get(query)
+    target_type = request.args.get('target_type', None)
+    result = cache.get(query if target_type is None else query + '_' + target_type.lower())
     if not result:
-        for query_class in QUERY_CLASSES:
+        query_classes = SIDEREAL_QUERY_CLASSES + NON_SIDEREAL_QUERY_CLASSES
+        if target_type is not None:
+            query_classes = SIDEREAL_QUERY_CLASSES if target_type.lower() == 'sidereal' else NON_SIDEREAL_QUERY_CLASSES
+        for query_class in query_classes:
             result = query_class(query).get_result()
             if result:
                 cache.set(query, result, timeout=60 * 60 * 60)

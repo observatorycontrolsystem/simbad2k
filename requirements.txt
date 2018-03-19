@@ -1,4 +1,6 @@
 flask
 requests
 astroquery
+git://github.com/dmcollom/astroquery.git#egg=astroquery
 uwsgi
+flask_cors
