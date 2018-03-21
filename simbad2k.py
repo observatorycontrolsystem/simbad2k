@@ -9,8 +9,9 @@ CORS(app)
 
 
 class PlanetQuery(object):
-    def __init__(self, query):
+    def __init__(self, query, scheme):
         self.query = query.lower()
+        self.scheme = scheme
 
     def get_result(self):
         import json
@@ -20,11 +21,12 @@ class PlanetQuery(object):
 
 
 class SimbadQuery(object):
-    def __init__(self, query):
+    def __init__(self, query, scheme):
         from astroquery.simbad import Simbad
         self.simbad = Simbad()
         self.simbad.add_votable_fields('pmra', 'pmdec', 'ra(d)', 'dec(d)')
         self.query = query
+        self.scheme = scheme
 
     def get_result(self):
         result = self.simbad.query_object(self.query)
@@ -39,17 +41,22 @@ class SimbadQuery(object):
 
 
 class MPCQuery(object):
-    def __init__(self, query):
+    def __init__(self, query, scheme):
         self.query = query
         self.keys = [
             'argument_of_perihelion', 'ascending_node', 'eccentricity',
             'inclination', 'mean_anomaly', 'semimajor_axis', 'perihelion_date_jd',
             'epoch_jd', 'perihelion_distance'
         ]
+        self.scheme_mapping = {'MPC_MINOR_PLANET': ['asteroid', 'name'], 'MPC_COMET': ['comet', 'number']}
+        self.scheme = scheme
 
     def get_result(self):
         from astroquery.mpc import MPC
-        params = {'name': self.query}
+        if self.scheme not in self.scheme_mapping:
+            return None
+        scheme_specific_params = self.scheme_mapping[self.scheme]
+        params = {'target_type': scheme_specific_params[0], scheme_specific_params[1]: self.query}
         result = MPC.query_object_async(**params).json()
         if result:
             return {k: float(result[0][k]) for k in self.keys}
@@ -57,8 +64,9 @@ class MPCQuery(object):
 
 
 class NEDQuery(object):
-    def __init__(self, query):
+    def __init__(self, query, scheme):
         self.query = query
+        self.scheme = scheme
 
     def get_result(self):
         from astroquery.ned import Ned
@@ -73,17 +81,16 @@ class NEDQuery(object):
 
 SIDEREAL_QUERY_CLASSES = [SimbadQuery, NEDQuery]
 NON_SIDEREAL_QUERY_CLASSES = [PlanetQuery, MPCQuery]
+QUERY_CLASSES_BY_TARGET_TYPE = {'sidereal': [SimbadQuery, NEDQuery], 'non_sidereal': [MPCQuery, PlanetQuery]}
 
 @app.route('/<query>')
 def root(query):
     target_type = request.args.get('target_type', None)
+    scheme = request.args.get('scheme', None)
     result = cache.get(query if target_type is None else query + '_' + target_type.lower())
     if not result:
-        query_classes = SIDEREAL_QUERY_CLASSES + NON_SIDEREAL_QUERY_CLASSES
-        if target_type is not None:
-            query_classes = SIDEREAL_QUERY_CLASSES if target_type.lower() == 'sidereal' else NON_SIDEREAL_QUERY_CLASSES
-        for query_class in query_classes:
-            result = query_class(query).get_result()
+        for query_class in QUERY_CLASSES_BY_TARGET_TYPE[target_type]:
+            result = query_class(query, scheme).get_result()
             if result:
                 cache.set(query, result, timeout=60 * 60 * 60)
                 return jsonify(**result)
