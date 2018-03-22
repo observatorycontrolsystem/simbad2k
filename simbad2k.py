@@ -30,7 +30,6 @@ class SimbadQuery(object):
 
     def get_result(self):
         result = self.simbad.query_object(self.query)
-        print(result)
         if result:
             ret_dict = {}
             for key in ['RA', 'DEC', 'RA_d', 'DEC_d', 'PMRA', 'PMDEC']:
