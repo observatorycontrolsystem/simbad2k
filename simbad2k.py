@@ -1,14 +1,17 @@
 #!/usr/bin/env python
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
+from flask_cors import CORS
 from astroquery.exceptions import RemoteServiceError
 from werkzeug.contrib.cache import SimpleCache
 cache = SimpleCache()
 app = Flask(__name__)
+CORS(app)
 
 
 class PlanetQuery(object):
-    def __init__(self, query):
+    def __init__(self, query, scheme):
         self.query = query.lower()
+        self.scheme = scheme
 
     def get_result(self):
         import json
@@ -18,11 +21,12 @@ class PlanetQuery(object):
 
 
 class SimbadQuery(object):
-    def __init__(self, query):
+    def __init__(self, query, scheme):
         from astroquery.simbad import Simbad
         self.simbad = Simbad()
         self.simbad.add_votable_fields('pmra', 'pmdec', 'ra(d)', 'dec(d)')
         self.query = query
+        self.scheme = scheme
 
     def get_result(self):
         result = self.simbad.query_object(self.query)
@@ -36,27 +40,32 @@ class SimbadQuery(object):
 
 
 class MPCQuery(object):
-    def __init__(self, query):
+    def __init__(self, query, scheme):
         self.query = query
         self.keys = [
             'argument_of_perihelion', 'ascending_node', 'eccentricity',
-            'inclination', 'mean_anomaly', 'semimajor_axis',
+            'inclination', 'mean_anomaly', 'semimajor_axis', 'perihelion_date_jd',
+            'epoch_jd', 'perihelion_distance'
         ]
+        self.scheme_mapping = {'mpc_minor_planet': ['asteroid', 'name'], 'mpc_comet': ['comet', 'number']}
+        self.scheme = scheme
 
     def get_result(self):
-        import requests
-        url = 'http://minorplanetcenter.net/web_service/search_orbits'
-        params = {'name': self.query, 'json': 1}
-        auth = ('mpc_ws', 'mpc!!ws')
-        result = requests.post(url=url, params=params, auth=auth).json()
+        from astroquery.mpc import MPC
+        if self.scheme not in self.scheme_mapping:
+            return None
+        scheme_specific_params = self.scheme_mapping[self.scheme]
+        params = {'target_type': scheme_specific_params[0], scheme_specific_params[1]: self.query}
+        result = MPC.query_object_async(**params).json()
         if result:
             return {k: float(result[0][k]) for k in self.keys}
         return None
 
 
 class NEDQuery(object):
-    def __init__(self, query):
+    def __init__(self, query, scheme):
         self.query = query
+        self.scheme = scheme
 
     def get_result(self):
         from astroquery.ned import Ned
@@ -69,16 +78,21 @@ class NEDQuery(object):
         ret_dict['dec_d'] = result_table['DEC(deg)'][0]
         return ret_dict
 
+SIDEREAL_QUERY_CLASSES = [SimbadQuery, NEDQuery]
+NON_SIDEREAL_QUERY_CLASSES = [PlanetQuery, MPCQuery]
+QUERY_CLASSES_BY_TARGET_TYPE = {'sidereal': SIDEREAL_QUERY_CLASSES, 'non_sidereal': NON_SIDEREAL_QUERY_CLASSES}
 
-QUERY_CLASSES = [PlanetQuery, SimbadQuery, MPCQuery, NEDQuery]
-
-
-@app.route('/<query>/')
+@app.route('/<query>')
 def root(query):
-    result = cache.get(query)
+    target_type = request.args.get('target_type', None)
+    scheme = request.args.get('scheme', None)
+    result = cache.get(query if target_type is None else query + '_' + target_type.lower())
     if not result:
-        for query_class in QUERY_CLASSES:
-            result = query_class(query).get_result()
+        query_classes = SIDEREAL_QUERY_CLASSES + NON_SIDEREAL_QUERY_CLASSES
+        if target_type is not None:
+            query_classes = QUERY_CLASSES_BY_TARGET_TYPE[target_type.lower()]
+        for query_class in query_classes:
+            result = query_class(query, scheme.lower()).get_result()
             if result:
                 cache.set(query, result, timeout=60 * 60 * 60)
                 return jsonify(**result)
