@@ -2,7 +2,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from astroquery.exceptions import RemoteServiceError
-from werkzeug.contrib.cache import SimpleCache, NullCache
+from werkzeug.contrib.cache import SimpleCache
 cache = SimpleCache()
 app = Flask(__name__)
 CORS(app)
@@ -48,7 +48,7 @@ class MPCQuery(object):
             'inclination', 'mean_anomaly', 'semimajor_axis', 'perihelion_date_jd',
             'epoch_jd', 'perihelion_distance'
         ]
-        self.scheme_mapping = {'MPC_MINOR_PLANET': ['asteroid', 'name'], 'MPC_COMET': ['comet', 'number']}
+        self.scheme_mapping = {'mpc_minor_planet': ['asteroid', 'name'], 'mpc_comet': ['comet', 'number']}
         self.scheme = scheme
 
     def get_result(self):
@@ -81,7 +81,7 @@ class NEDQuery(object):
 
 SIDEREAL_QUERY_CLASSES = [SimbadQuery, NEDQuery]
 NON_SIDEREAL_QUERY_CLASSES = [PlanetQuery, MPCQuery]
-QUERY_CLASSES_BY_TARGET_TYPE = {'sidereal': [SimbadQuery, NEDQuery], 'non_sidereal': [MPCQuery, PlanetQuery]}
+QUERY_CLASSES_BY_TARGET_TYPE = {'sidereal': SIDEREAL_QUERY_CLASSES, 'non_sidereal': NON_SIDEREAL_QUERY_CLASSES}
 
 @app.route('/<query>')
 def root(query):
@@ -89,8 +89,11 @@ def root(query):
     scheme = request.args.get('scheme', None)
     result = cache.get(query if target_type is None else query + '_' + target_type.lower())
     if not result:
-        for query_class in QUERY_CLASSES_BY_TARGET_TYPE[target_type]:
-            result = query_class(query, scheme).get_result()
+        query_classes = SIDEREAL_QUERY_CLASSES + NON_SIDEREAL_QUERY_CLASSES
+        if target_type is not None:
+            query_classes = QUERY_CLASSES_BY_TARGET_TYPE[target_type.lower()]
+        for query_class in query_classes:
+            result = query_class(query, scheme.lower()).get_result()
             if result:
                 cache.set(query, result, timeout=60 * 60 * 60)
                 return jsonify(**result)
