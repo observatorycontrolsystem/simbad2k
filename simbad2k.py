@@ -85,7 +85,7 @@ QUERY_CLASSES_BY_TARGET_TYPE = {'sidereal': SIDEREAL_QUERY_CLASSES, 'non_siderea
 @app.route('/<query>')
 def root(query):
     target_type = request.args.get('target_type', None)
-    scheme = request.args.get('scheme', None)
+    scheme = request.args.get('scheme', '')
     result = cache.get(query if target_type is None else query + '_' + target_type.lower())
     if not result:
         query_classes = SIDEREAL_QUERY_CLASSES + NON_SIDEREAL_QUERY_CLASSES
@@ -102,7 +102,13 @@ def root(query):
 
 @app.route('/')
 def index():
-    return 'This is simbad2k. To query for an object, use /&lt;object&gt;/. Ex: <a href="/m51/">/m51/</a>'
+    instructions = ('This is simbad2k. To query for a sidereal object, use '
+            '/&lt;object&gt;?target_type=&lt;sidereal or non_sidereal&gt;. '
+            'For non_sidereal targets, you must include scheme, which can be '
+            'either mpc_minor_planet or mpc_comet.'
+            'Ex: <a href="/103P?target_type=non_sidereal&scheme=mpc_comet">'
+            '/m51?target_type=sidereal&scheme=mpc_comet</a>')
+    return instructions
 
 
 if __name__ == "__main__":
