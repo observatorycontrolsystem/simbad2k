@@ -85,7 +85,6 @@ QUERY_CLASSES_BY_TARGET_TYPE = {'sidereal': SIDEREAL_QUERY_CLASSES, 'non_siderea
 
 @app.route('/<query>')
 def root(query):
-    print(query)
     target_type = request.args.get('target_type', None)
     scheme = request.args.get('scheme', '')
     result = cache.get(query if target_type is None else query + '_' + target_type.lower())
