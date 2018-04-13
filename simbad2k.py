@@ -31,7 +31,6 @@ class SimbadQuery(object):
     def get_result(self):
         result = self.simbad.query_object(self.query)
         if result:
-            print(result.keys())
             ret_dict = {}
             for key in ['RA', 'DEC', 'RA_d', 'DEC_d', 'PMRA', 'PMDEC']:
                 if str(result[key][0]) not in ['--', '']:
