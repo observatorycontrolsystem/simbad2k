@@ -24,15 +24,17 @@ class SimbadQuery(object):
     def __init__(self, query, scheme):
         from astroquery.simbad import Simbad
         self.simbad = Simbad()
-        self.simbad.add_votable_fields('pmra', 'pmdec', 'ra(d)', 'dec(d)')
+        print(self.simbad.get_votable_fields())
+        self.simbad.add_votable_fields('parallax')
         self.query = query
         self.scheme = scheme
 
     def get_result(self):
         result = self.simbad.query_object(self.query)
         if result:
+            print(result.keys())
             ret_dict = {}
-            for key in ['RA', 'DEC', 'RA_d', 'DEC_d', 'PMRA', 'PMDEC']:
+            for key in ['PLX_PREC']:
                 if str(result[key][0]) not in ['--', '']:
                     ret_dict[key.lower()] = result[key][0]
             return ret_dict
@@ -84,6 +86,7 @@ QUERY_CLASSES_BY_TARGET_TYPE = {'sidereal': SIDEREAL_QUERY_CLASSES, 'non_siderea
 
 @app.route('/<query>')
 def root(query):
+    print(query)
     target_type = request.args.get('target_type', None)
     scheme = request.args.get('scheme', '')
     result = cache.get(query if target_type is None else query + '_' + target_type.lower())
