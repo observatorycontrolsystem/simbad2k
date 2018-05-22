@@ -47,18 +47,19 @@ class MPCQuery(object):
             'inclination', 'mean_anomaly', 'semimajor_axis', 'perihelion_date_jd',
             'epoch_jd', 'perihelion_distance'
         ]
-        self.scheme_mapping = {'mpc_minor_planet': ['asteroid', 'name'], 'mpc_comet': ['comet', 'number']}
+        self.scheme_mapping = {'mpc_minor_planet': 'asteroid', 'mpc_comet': 'comet'}
+        self.query_params_mapping = {'mpc_minor_planet': ['name', 'number', 'designation'], 'mpc_comet': ['number']}
         self.scheme = scheme
 
     def get_result(self):
         from astroquery.mpc import MPC
         if self.scheme not in self.scheme_mapping:
             return None
-        scheme_specific_params = self.scheme_mapping[self.scheme]
-        params = {'target_type': scheme_specific_params[0], scheme_specific_params[1]: self.query}
-        result = MPC.query_object_async(**params).json()
-        if result:
-            return {k: float(result[0][k]) for k in self.keys}
+        for query_param in self.query_params_mapping[self.scheme]:
+            params = {'target_type': self.scheme_mapping[self.scheme], query_param: self.query}
+            result = MPC.query_object_async(**params).json()
+            if result:
+                return {k: float(result[0][k]) for k in self.keys}
         return None
 
 
