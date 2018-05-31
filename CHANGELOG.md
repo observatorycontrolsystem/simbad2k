@@ -1,3 +1,8 @@
+## 1.0.3
+2018-05-31
+
+* Fixed caching issue and made MPC querying scheme-agnostic
+
 ## 1.0.2
 2018-05-22
 
