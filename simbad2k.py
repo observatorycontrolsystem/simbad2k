@@ -7,7 +7,6 @@ cache = SimpleCache()
 app = Flask(__name__)
 CORS(app)
 
-
 class PlanetQuery(object):
     def __init__(self, query, scheme):
         self.query = query.lower()
@@ -53,14 +52,18 @@ class MPCQuery(object):
 
     def get_result(self):
         from astroquery.mpc import MPC
-        if self.scheme not in self.scheme_mapping:
+        schemes = []
+        if self.scheme in self.scheme_mapping:
+            schemes.append(self.scheme)
+        else:
+            schemes = [*self.scheme_mapping]
+        for scheme in schemes:
+            for query_param in self.query_params_mapping[scheme]:
+                params = {'target_type': self.scheme_mapping[scheme], query_param: self.query}
+                result = MPC.query_object_async(**params).json()
+                if result:
+                    return {k: float(result[0][k]) for k in self.keys}
             return None
-        for query_param in self.query_params_mapping[self.scheme]:
-            params = {'target_type': self.scheme_mapping[self.scheme], query_param: self.query}
-            result = MPC.query_object_async(**params).json()
-            if result:
-                return {k: float(result[0][k]) for k in self.keys}
-        return None
 
 
 class NEDQuery(object):
@@ -85,12 +88,12 @@ QUERY_CLASSES_BY_TARGET_TYPE = {'sidereal': SIDEREAL_QUERY_CLASSES, 'non_siderea
 
 @app.route('/<query>')
 def root(query):
-    target_type = request.args.get('target_type', None)
+    target_type = request.args.get('target_type', '')
     scheme = request.args.get('scheme', '')
-    result = cache.get(query if target_type is None else query + '_' + target_type.lower())
+    result = cache.get(query)
     if not result:
         query_classes = SIDEREAL_QUERY_CLASSES + NON_SIDEREAL_QUERY_CLASSES
-        if target_type is not None:
+        if target_type:
             query_classes = QUERY_CLASSES_BY_TARGET_TYPE[target_type.lower()]
         for query_class in query_classes:
             result = query_class(query, scheme.lower()).get_result()
