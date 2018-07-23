@@ -47,7 +47,7 @@ class MPCQuery(object):
             'epoch_jd', 'perihelion_distance'
         ]
         self.scheme_mapping = {'mpc_minor_planet': 'asteroid', 'mpc_comet': 'comet'}
-        self.query_params_mapping = {'mpc_minor_planet': ['name', 'number', 'designation'], 'mpc_comet': ['number']}
+        self.query_params_mapping = {'mpc_minor_planet': ['name', 'designation', 'number'], 'mpc_comet': ['number']}
         self.scheme = scheme
 
     def get_result(self):
