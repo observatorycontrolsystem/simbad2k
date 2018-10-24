@@ -3,6 +3,8 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from astroquery.exceptions import RemoteServiceError
 from werkzeug.contrib.cache import SimpleCache
+from datetime import datetime
+import math
 cache = SimpleCache()
 app = Flask(__name__)
 CORS(app)
@@ -60,8 +62,23 @@ class MPCQuery(object):
         for scheme in schemes:
             for query_param in self.query_params_mapping[scheme]:
                 params = {'target_type': self.scheme_mapping[scheme], query_param: self.query}
-                result = MPC.query_object_async(**params).json()
-                if result:
+                result = MPC.query_objects_async(**params).json()
+                if len(result) > 1:
+                    # Return the set of orbital elements closest to the current date
+                    recent = None
+                    recent_time_diff = None
+                    now = datetime.now()
+                    for ephemeris in result:
+                        if not recent or not recent_time_diff:
+                            recent = ephemeris
+                            recent_time_diff = math.fabs((datetime.strptime(recent['epoch'].rstrip('0').rstrip('.'), '%Y-%m-%d') - now).days)
+                        else:
+                            ephemeris_time_diff = math.fabs((datetime.strptime(ephemeris['epoch'].rstrip('0').rstrip('.'), '%Y-%m-%d') - now).days)
+                            if ephemeris_time_diff < recent_time_diff:
+                                recent = ephemeris
+                                recent_time_diff = math.fabs((datetime.strptime(recent['epoch'].rstrip('0').rstrip('.'), '%Y-%m-%d') - now).days)
+                    return {k: float(recent[k]) for k in self.keys}
+                elif len(result) == 1:
                     return {k: float(result[0][k]) for k in self.keys}
             return None
 
