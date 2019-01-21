@@ -1,3 +1,8 @@
+## 1.0.4
+2019-01-21
+
+* Return parallax from SIMBAD queries
+
 ## 1.0.3
 2018-05-31
 

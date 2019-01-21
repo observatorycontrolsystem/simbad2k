@@ -25,7 +25,7 @@ class SimbadQuery(object):
     def __init__(self, query, scheme):
         from astroquery.simbad import Simbad
         self.simbad = Simbad()
-        self.simbad.add_votable_fields('pmra', 'pmdec', 'ra(d)', 'dec(d)')
+        self.simbad.add_votable_fields('pmra', 'pmdec', 'ra(d)', 'dec(d)', 'plx')
         self.query = query
         self.scheme = scheme
 
@@ -33,7 +33,7 @@ class SimbadQuery(object):
         result = self.simbad.query_object(self.query)
         if result:
             ret_dict = {}
-            for key in ['RA', 'DEC', 'RA_d', 'DEC_d', 'PMRA', 'PMDEC']:
+            for key in ['RA', 'DEC', 'RA_d', 'DEC_d', 'PMRA', 'PMDEC', 'PLX_VALUE']:
                 if str(result[key][0]) not in ['--', '']:
                     ret_dict[key.lower()] = result[key][0]
             return ret_dict
