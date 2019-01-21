@@ -1,3 +1,8 @@
+## 1.0.6
+2019-01-21
+
+* Version bump ahead of mystery versions
+
 ## 1.0.4
 2019-01-21
 
