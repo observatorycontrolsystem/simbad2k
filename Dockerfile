@@ -1,18 +1,17 @@
-FROM python:3.5
-MAINTAINER Las Cumbres Observatory <webmaster@lco.global>
+FROM python:3.6-alpine
 
-EXPOSE 80
-ENTRYPOINT [ "/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf" ]
+WORKDIR /app
 
-RUN apt-get update \
-        && apt-get -y install git nginx supervisor \
-        && apt-get -y clean \
-        && rm -rf /var/lib/apt/lists/*
+# install Python dependencies
+COPY requirements.txt .
+RUN apk --no-cache add libffi openssl \
+        && apk --no-cache add --virtual .build-deps gcc libffi-dev musl-dev openssl-dev \
+        && pip install --upgrade 'pip>=19.0.2' \
+        && pip --no-cache-dir install -r requirements.txt \
+        && apk --no-cache del .build-deps
 
-RUN rm -f /etc/nginx/sites-enabled/default
+# install application
+COPY . .
 
-COPY requirements.txt /var/www/simbad2k/
-RUN pip --no-cache-dir --trusted-host=buildsba.lco.gtn install -r /var/www/simbad2k/requirements.txt
-
-COPY docker/ /
-COPY . /var/www/simbad2k/
+# default command
+CMD [ "gunicorn", "--worker-class=gevent", "--bind=0.0.0.0:5000", "--access-logfile=-", "--error-logfile=-", "simbad2k:app" ]

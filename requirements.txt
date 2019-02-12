@@ -1,5 +1,5 @@
 flask
 requests
 astroquery
-uwsgi
 flask_cors
+gunicorn[gevent]==19.9.0
