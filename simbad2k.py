@@ -49,7 +49,7 @@ class MPCQuery(object):
             'epoch_jd', 'perihelion_distance'
         ]
         self.scheme_mapping = {'mpc_minor_planet': 'asteroid', 'mpc_comet': 'comet'}
-        self.query_params_mapping = {'mpc_minor_planet': ['name', 'designation', 'number'], 'mpc_comet': ['number']}
+        self.query_params_mapping = {'mpc_minor_planet': ['name', 'designation', 'number'], 'mpc_comet': ['number', 'designation']}
         self.scheme = scheme
 
     def get_result(self):
@@ -103,7 +103,7 @@ SIDEREAL_QUERY_CLASSES = [SimbadQuery, NEDQuery]
 NON_SIDEREAL_QUERY_CLASSES = [PlanetQuery, MPCQuery]
 QUERY_CLASSES_BY_TARGET_TYPE = {'sidereal': SIDEREAL_QUERY_CLASSES, 'non_sidereal': NON_SIDEREAL_QUERY_CLASSES}
 
-@app.route('/<query>')
+@app.route('/<path:query>')
 def root(query):
     target_type = request.args.get('target_type', '')
     scheme = request.args.get('scheme', '')
