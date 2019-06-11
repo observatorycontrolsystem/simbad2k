@@ -25,7 +25,7 @@ class SimbadQuery(object):
     def __init__(self, query, scheme):
         from astroquery.simbad import Simbad
         self.simbad = Simbad()
-        self.simbad.add_votable_fields('pmra', 'pmdec', 'ra(d)', 'dec(d)', 'plx')
+        self.simbad.add_votable_fields('pmra', 'pmdec', 'ra(d)', 'dec(d)', 'plx', 'main_id')
         self.query = query
         self.scheme = scheme
 
@@ -33,9 +33,12 @@ class SimbadQuery(object):
         result = self.simbad.query_object(self.query)
         if result:
             ret_dict = {}
-            for key in ['RA', 'DEC', 'RA_d', 'DEC_d', 'PMRA', 'PMDEC', 'PLX_VALUE']:
+            for key in ['RA', 'DEC', 'RA_d', 'DEC_d', 'PMRA', 'PMDEC', 'PLX_VALUE', 'MAIN_ID']:
                 if str(result[key][0]) not in ['--', '']:
                     ret_dict[key.lower()] = result[key][0]
+            if ret_dict.get('main_id'):
+                ret_dict['name'] = ret_dict['main_id'].decode()
+                del ret_dict['main_id']
             return ret_dict
         return None
 
@@ -77,9 +80,13 @@ class MPCQuery(object):
                             if ephemeris_time_diff < recent_time_diff:
                                 recent = ephemeris
                                 recent_time_diff = math.fabs((datetime.strptime(recent['epoch'].rstrip('0').rstrip('.'), '%Y-%m-%d') - now).days)
-                    return {k: float(recent[k]) for k in self.keys}
+                    ret_dict = {k: float(recent[k]) for k in self.keys}
                 elif len(result) == 1:
-                    return {k: float(result[0][k]) for k in self.keys}
+                    ret_dict = {k: float(result[0][k]) for k in self.keys}
+                ret_dict['name'] = self.query
+
+                return ret_dict
+
             return None
 
 
@@ -97,6 +104,7 @@ class NEDQuery(object):
             return None
         ret_dict['ra_d'] = result_table['RA(deg)'][0]
         ret_dict['dec_d'] = result_table['DEC(deg)'][0]
+        ret_dict['name'] = self.query
         return ret_dict
 
 SIDEREAL_QUERY_CLASSES = [SimbadQuery, NEDQuery]
