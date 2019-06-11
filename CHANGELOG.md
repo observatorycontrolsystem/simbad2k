@@ -1,4 +1,4 @@
-## 1.0.7
+## 1.0.9
 2019-06-11
 
 * Return name in search results
