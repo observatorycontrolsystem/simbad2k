@@ -66,6 +66,7 @@ class MPCQuery(object):
             for query_param in self.query_params_mapping[scheme]:
                 params = {'target_type': self.scheme_mapping[scheme], query_param: self.query}
                 result = MPC.query_objects_async(**params).json()
+                ret_dict = {}
                 if len(result) > 1:
                     # Return the set of orbital elements closest to the current date
                     recent = None
@@ -83,9 +84,10 @@ class MPCQuery(object):
                     ret_dict = {k: float(recent[k]) for k in self.keys}
                 elif len(result) == 1:
                     ret_dict = {k: float(result[0][k]) for k in self.keys}
-                ret_dict['name'] = self.query
 
-                return ret_dict
+                if ret_dict:
+                    ret_dict['name'] = self.query
+                    return ret_dict
 
             return None
 
