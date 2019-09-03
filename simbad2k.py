@@ -4,6 +4,7 @@ from flask_cors import CORS
 from astroquery.exceptions import RemoteServiceError
 from werkzeug.contrib.cache import SimpleCache
 from datetime import datetime
+from urllib import parse
 import math
 cache = SimpleCache()
 app = Flask(__name__)
@@ -117,13 +118,14 @@ QUERY_CLASSES_BY_TARGET_TYPE = {'sidereal': SIDEREAL_QUERY_CLASSES, 'non_siderea
 def root(query):
     target_type = request.args.get('target_type', '')
     scheme = request.args.get('scheme', '')
+    target = parse.unquote_plus(query.split('&')[0])
     result = cache.get(query)
     if not result:
         query_classes = SIDEREAL_QUERY_CLASSES + NON_SIDEREAL_QUERY_CLASSES
         if target_type:
             query_classes = QUERY_CLASSES_BY_TARGET_TYPE[target_type.lower()]
         for query_class in query_classes:
-            result = query_class(query, scheme.lower()).get_result()
+            result = query_class(target, scheme.lower()).get_result()
             if result:
                 cache.set(query, result, timeout=60 * 60 * 60)
                 return jsonify(**result)
