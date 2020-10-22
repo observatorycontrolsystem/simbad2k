@@ -1,13 +1,22 @@
 #!/usr/bin/env python
+from datetime import datetime
+import logging
+import math
+
+from astroquery.exceptions import RemoteServiceError
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from astroquery.exceptions import RemoteServiceError
-from werkzeug.contrib.cache import SimpleCache
-from datetime import datetime
+from flask_caching import Cache
 from urllib import parse
-import math
-cache = SimpleCache()
+
+config = {
+    'CACHE_TYPE': 'simple',
+    'CACHE_DEFAULT_TIMEOUT': 60 * 60 * 60
+}
+
 app = Flask(__name__)
+app.config.from_mapping(config)
+cache = Cache(app)
 CORS(app)
 
 class PlanetQuery(object):
@@ -38,7 +47,7 @@ class SimbadQuery(object):
                 if str(result[key][0]) not in ['--', '']:
                     ret_dict[key.lower()] = result[key][0]
             if ret_dict.get('main_id'):
-                ret_dict['name'] = ret_dict['main_id'].decode()
+                ret_dict['name'] = ret_dict['main_id']
                 del ret_dict['main_id']
             return ret_dict
         return None
@@ -53,7 +62,9 @@ class MPCQuery(object):
             'epoch_jd', 'perihelion_distance'
         ]
         self.scheme_mapping = {'mpc_minor_planet': 'asteroid', 'mpc_comet': 'comet'}
-        self.query_params_mapping = {'mpc_minor_planet': ['name', 'designation', 'number'], 'mpc_comet': ['number', 'designation']}
+        self.query_params_mapping = {
+            'mpc_minor_planet': ['name', 'designation', 'number'], 'mpc_comet': ['number', 'designation']
+        }
         self.scheme = scheme
 
     def get_result(self):
@@ -76,12 +87,18 @@ class MPCQuery(object):
                     for ephemeris in result:
                         if not recent or not recent_time_diff:
                             recent = ephemeris
-                            recent_time_diff = math.fabs((datetime.strptime(recent['epoch'].rstrip('0').rstrip('.'), '%Y-%m-%d') - now).days)
+                            recent_time_diff = math.fabs(
+                                (datetime.strptime(recent['epoch'].rstrip('0').rstrip('.'), '%Y-%m-%d') - now).days
+                            )
                         else:
-                            ephemeris_time_diff = math.fabs((datetime.strptime(ephemeris['epoch'].rstrip('0').rstrip('.'), '%Y-%m-%d') - now).days)
+                            ephemeris_time_diff = math.fabs(
+                                (datetime.strptime(ephemeris['epoch'].rstrip('0').rstrip('.'), '%Y-%m-%d') - now).days
+                            )
                             if ephemeris_time_diff < recent_time_diff:
                                 recent = ephemeris
-                                recent_time_diff = math.fabs((datetime.strptime(recent['epoch'].rstrip('0').rstrip('.'), '%Y-%m-%d') - now).days)
+                                recent_time_diff = math.fabs(
+                                    (datetime.strptime(recent['epoch'].rstrip('0').rstrip('.'), '%Y-%m-%d') - now).days
+                                )
                     ret_dict = {k: float(recent[k]) for k in self.keys}
                 elif len(result) == 1:
                     ret_dict = {k: float(result[0][k]) for k in self.keys}
@@ -105,14 +122,18 @@ class NEDQuery(object):
             result_table = Ned.query_object(self.query)
         except RemoteServiceError:
             return None
+        if len(result_table) == 0:
+            return None
         ret_dict['ra_d'] = result_table['RA(deg)'][0]
         ret_dict['dec_d'] = result_table['DEC(deg)'][0]
         ret_dict['name'] = self.query
         return ret_dict
 
+
 SIDEREAL_QUERY_CLASSES = [SimbadQuery, NEDQuery]
 NON_SIDEREAL_QUERY_CLASSES = [PlanetQuery, MPCQuery]
 QUERY_CLASSES_BY_TARGET_TYPE = {'sidereal': SIDEREAL_QUERY_CLASSES, 'non_sidereal': NON_SIDEREAL_QUERY_CLASSES}
+
 
 @app.route('/<path:query>')
 def root(query):
@@ -136,11 +157,11 @@ def root(query):
 @app.route('/')
 def index():
     instructions = ('This is simbad2k. To query for a sidereal object, use '
-            '/&lt;object&gt;?target_type=&lt;sidereal or non_sidereal&gt;. '
-            'For non_sidereal targets, you must include scheme, which can be '
-            'either mpc_minor_planet or mpc_comet.'
-            'Ex: <a href="/103P?target_type=non_sidereal&scheme=mpc_comet">'
-            '/m51?target_type=sidereal&scheme=mpc_comet</a>')
+                    '/&lt;object&gt;?target_type=&lt;sidereal or non_sidereal&gt;. '
+                    'For non_sidereal targets, you must include scheme, which can be '
+                    'either mpc_minor_planet or mpc_comet.'
+                    'Ex: <a href="/103P?target_type=non_sidereal&scheme=mpc_comet">'
+                    '/m51?target_type=sidereal&scheme=mpc_comet</a>')
     return instructions
 
 

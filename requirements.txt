@@ -1,5 +1,6 @@
-flask
-requests
-astroquery
-flask_cors
+flask~=1.1
+Flask-Caching~=1.9
+requests~=2.24
+astroquery~=0.4
+flask_cors~=3.0
 gunicorn[gevent]==19.9.0
