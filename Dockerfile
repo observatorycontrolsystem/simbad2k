@@ -1,14 +1,13 @@
-FROM python:3.6-alpine
+FROM python:3.8-slim
 
 WORKDIR /app
 
 # install Python dependencies
 COPY requirements.txt .
-RUN apk --no-cache add libffi openssl \
-        && apk --no-cache add --virtual .build-deps gcc libffi-dev musl-dev openssl-dev \
+RUN apt update && apt install openssl \
         && pip install --upgrade 'pip>=19.0.2' \
         && pip --no-cache-dir install -r requirements.txt \
-        && apk --no-cache del .build-deps
+        && apt clean
 
 # install application
 COPY . .
