@@ -1,23 +1,43 @@
 #!/usr/bin/env python
 from datetime import datetime
 import logging
+from logging.config import dictConfig
 import math
 
 from astroquery.exceptions import RemoteServiceError
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_caching import Cache
-from urllib import parse
+from lcogt_logging import LCOGTFormatter
 
 config = {
     'CACHE_TYPE': 'simple',
     'CACHE_DEFAULT_TIMEOUT': 60 * 60 * 60
 }
 
+dictConfig({
+    'version': 1,
+    'formatters': {'default': {
+        '()': LCOGTFormatter,
+    }},
+    'handlers': {'wsgi': {
+        'class': 'logging.StreamHandler',
+        'stream': 'ext://flask.logging.wsgi_errors_stream',
+        'formatter': 'default'
+    }},
+    'root': {
+        'level': 'INFO',
+        'handlers': ['wsgi']
+    }
+})
+
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__)
 app.config.from_mapping(config)
 cache = Cache(app)
 CORS(app)
+
 
 class PlanetQuery(object):
     def __init__(self, query, scheme):
@@ -137,20 +157,25 @@ QUERY_CLASSES_BY_TARGET_TYPE = {'sidereal': SIDEREAL_QUERY_CLASSES, 'non_siderea
 
 @app.route('/<path:query>')
 def root(query):
+    logger.log(msg=f'Received query for target {query}.', level=logging.INFO)
     target_type = request.args.get('target_type', '')
     scheme = request.args.get('scheme', '')
-    target = parse.unquote_plus(query.split('&')[0])
     result = cache.get(query)
+
     if not result:
         query_classes = SIDEREAL_QUERY_CLASSES + NON_SIDEREAL_QUERY_CLASSES
         if target_type:
             query_classes = QUERY_CLASSES_BY_TARGET_TYPE[target_type.lower()]
         for query_class in query_classes:
-            result = query_class(target, scheme.lower()).get_result()
+            result = query_class(query, scheme.lower()).get_result()
             if result:
                 cache.set(query, result, timeout=60 * 60 * 60)
+                logger.log(msg=f'Found target for {query} via {query_class.__name__} with data {result}',
+                           level=logging.INFO)
                 return jsonify(**result)
+        logger.log(msg=f'Unable to find result for name {query}.', level=logging.INFO)
         return jsonify({'error': 'No match found'})
+    logger.log(msg=f'Found cached target for {query} with data {result}', level=logging.INFO)
     return jsonify(**result)
 
 
