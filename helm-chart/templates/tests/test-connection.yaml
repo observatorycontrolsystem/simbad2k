@@ -3,7 +3,10 @@ kind: Pod
 metadata:
   name: "{{ include "simbad2k.fullname" . }}-test-connection"
   labels:
-{{ include "simbad2k.labels" . | indent 4 }}
+    app.kubernetes.io/name: {{ include "simbad2k.name" . }}
+    helm.sh/chart: {{ include "simbad2k.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
   annotations:
     "helm.sh/hook": test-success
 spec:

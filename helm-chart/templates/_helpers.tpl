@@ -32,14 +32,27 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{/*
-Common labels
+Astropy Cache Directory
 */}}
-{{- define "simbad2k.labels" -}}
-app.kubernetes.io/name: {{ include "simbad2k.name" . }}
-helm.sh/chart: {{ include "simbad2k.chart" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- define "simbad2k.astropyCacheDirectory" -}}
+{{- printf "/tmp/astropy-cache" -}}
+{{- end -}}
+
+{{/*
+Astropy Config Directory
+*/}}
+{{- define "simbad2k.astropyConfigDirectory" -}}
+{{- printf "/tmp/astropy-config" -}}
+{{- end -}}
+
+{{/*
+Create the environment variables for configuration of this project. They are
+repeated in a bunch of places, so to keep from repeating ourselves, we'll
+build it here and use it everywhere.
+*/}}
+{{- define "simbad2k.backendEnv" -}}
+- name: XDG_CACHE_HOME
+  value: {{ include "simbad2k.astropyCacheDirectory" . | quote }}
+- name: XDG_CONFIG_HOME
+  value: {{ include "simbad2k.astropyConfigDirectory" . | quote }}
 {{- end -}}

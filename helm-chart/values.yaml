@@ -2,14 +2,13 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-replicaCount: 1
+replicaCount: 3
 
 image:
   repository: "docker.lco.global/simbad2k"
-  tag: stable
+  tag: "1.0.13"
   pullPolicy: IfNotPresent
 
-imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
@@ -22,18 +21,18 @@ ingress:
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
+  paths: ["/"]
   hosts:
-    - host: chart-example.local
-      paths: []
-
+    - chart-example.local
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
 
+# Default resource requests/limits
 resources:
   requests:
-    cpu: 50m
+    cpu: 10m
     memory: 96Mi
   limits:
     cpu: 500m

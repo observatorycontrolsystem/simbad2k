@@ -1,13 +1,13 @@
 # Helm chart values for production deployment of lco/simbad2k application
 
-replicaCount: 1
+replicaCount: 3
 
 ingress:
   enabled: true
   annotations:
-    kubernetes.io/ingress.class: nginx-ingress-private
+    kubernetes.io/ingress.class: nginx-ingress-public
   hosts:
-    - simbad2k.lco.gtn
+    - simbad2k.lco.global
 
 # CPU/memory resource requests/limits
 resources:
