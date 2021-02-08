@@ -54,7 +54,7 @@ class PlanetQuery(object):
 class SimbadQuery(object):
     def __init__(self, query, scheme):
         from astroquery.simbad import Simbad
-        self.simbad = Simbad()
+        self.simbad = Simbad
         self.simbad.add_votable_fields('pmra', 'pmdec', 'ra(d)', 'dec(d)', 'plx', 'main_id')
         self.query = query
         self.scheme = scheme
