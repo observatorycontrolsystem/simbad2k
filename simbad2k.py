@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from datetime import datetime
+import hashlib
 import logging
 from logging.config import dictConfig
 import math
@@ -166,7 +167,11 @@ QUERY_CLASSES_BY_TARGET_TYPE = {'sidereal': SIDEREAL_QUERY_CLASSES, 'non_siderea
 
 
 def generate_cache_key(query, scheme, target_type):
-    return f'{query}{scheme}{target_type}'
+    cache_key = hashlib.sha3_256()
+    cache_key.update(query.encode())
+    cache_key.update(scheme.encode())
+    cache_key.update(target_type.encode())
+    return cache_key.hexdigest()
 
 
 @app.route('/<path:query>')
@@ -174,6 +179,7 @@ def root(query):
     logger.log(msg=f'Received query for target {query}.', level=logging.INFO)
     target_type = request.args.get('target_type', '')
     scheme = request.args.get('scheme', '')
+    logger.log(msg=f'Using search parameters scheme={scheme}, target_type={target_type}', level=logging.INFO)
     cache_key = generate_cache_key(query, scheme, target_type)
     result = cache.get(cache_key)
 
