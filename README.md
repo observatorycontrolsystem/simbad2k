@@ -24,15 +24,28 @@ is required for non-sidereal targets and has valid values of `mpc_minor_planet`
 and `mpc_comet`. Examples of three queries are as follows:
 
 `/m51?target_type=sidereal`
+
 `/103P?target_type=non_sidereal&scheme=mpc_comet`
+
 `/ceres?target_type=non_sidereal&scheme=mpc_minor_planet`
 
 ## Development
 
+Create a virtual environment and install app dependencies:
 ```
-python3.6 -m venv env3
+python3.8 -m venv env3
 source env3/bin/activate
 pip install -r requirements.txt
+pip install -r tests/test_requirements.txt
+```
+
+Run the tests:
+```
+pytest
+```
+
+Run the development server:
+```
 FLASK_DEBUG=1 FLASK_APP=simbad2k.py flask run
 ```
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from datetime import datetime
+import hashlib
 import logging
 from logging.config import dictConfig
 import math
@@ -54,7 +55,7 @@ class PlanetQuery(object):
 class SimbadQuery(object):
     def __init__(self, query, scheme):
         from astroquery.simbad import Simbad
-        self.simbad = Simbad()
+        self.simbad = Simbad
         self.simbad.add_votable_fields('pmra', 'pmdec', 'ra(d)', 'dec(d)', 'plx', 'main_id')
         self.query = query
         self.scheme = scheme
@@ -86,6 +87,16 @@ class MPCQuery(object):
             'mpc_minor_planet': ['name', 'designation', 'number'], 'mpc_comet': ['number', 'designation']
         }
         self.scheme = scheme
+
+    def _clean_result(self, result):
+        cleaned_result = {}
+        for key in self.keys:
+            try:
+                value = float(result[key])
+            except (ValueError, TypeError):
+                value = None
+            cleaned_result[key] = value
+        return cleaned_result
 
     def get_result(self):
         from astroquery.mpc import MPC
@@ -119,9 +130,9 @@ class MPCQuery(object):
                                 recent_time_diff = math.fabs(
                                     (datetime.strptime(recent['epoch'].rstrip('0').rstrip('.'), '%Y-%m-%d') - now).days
                                 )
-                    ret_dict = {k: float(recent[k]) for k in self.keys}
+                    ret_dict = self._clean_result(recent)
                 elif len(result) == 1:
-                    ret_dict = {k: float(result[0][k]) for k in self.keys}
+                    ret_dict = self._clean_result(result[0])
 
                 if ret_dict:
                     ret_dict['name'] = self.query
@@ -155,12 +166,22 @@ NON_SIDEREAL_QUERY_CLASSES = [PlanetQuery, MPCQuery]
 QUERY_CLASSES_BY_TARGET_TYPE = {'sidereal': SIDEREAL_QUERY_CLASSES, 'non_sidereal': NON_SIDEREAL_QUERY_CLASSES}
 
 
+def generate_cache_key(query, scheme, target_type):
+    cache_key = hashlib.sha3_256()
+    cache_key.update(query.encode())
+    cache_key.update(scheme.encode())
+    cache_key.update(target_type.encode())
+    return cache_key.hexdigest()
+
+
 @app.route('/<path:query>')
 def root(query):
     logger.log(msg=f'Received query for target {query}.', level=logging.INFO)
     target_type = request.args.get('target_type', '')
     scheme = request.args.get('scheme', '')
-    result = cache.get(query)
+    logger.log(msg=f'Using search parameters scheme={scheme}, target_type={target_type}', level=logging.INFO)
+    cache_key = generate_cache_key(query, scheme, target_type)
+    result = cache.get(cache_key)
 
     if not result:
         query_classes = SIDEREAL_QUERY_CLASSES + NON_SIDEREAL_QUERY_CLASSES
@@ -169,7 +190,7 @@ def root(query):
         for query_class in query_classes:
             result = query_class(query, scheme.lower()).get_result()
             if result:
-                cache.set(query, result, timeout=60 * 60 * 60)
+                cache.set(cache_key, result, timeout=60 * 60 * 60)
                 logger.log(msg=f'Found target for {query} via {query_class.__name__} with data {result}',
                            level=logging.INFO)
                 return jsonify(**result)
