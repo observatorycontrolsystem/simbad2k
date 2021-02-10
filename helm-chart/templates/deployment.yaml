@@ -54,11 +54,11 @@ spec:
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /m51
+              path: /
               port: http
           readinessProbe:
             httpGet:
-              path: /m51
+              path: /
               port: http
           securityContext:
             runAsNonRoot: true
