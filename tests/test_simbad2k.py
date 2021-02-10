@@ -5,7 +5,6 @@ import pytest
 from astropy.table import Table
 from astroquery.mpc import MPC
 from astroquery.ned import Ned
-from astroquery.simbad import Simbad
 
 import simbad2k
 
@@ -64,12 +63,13 @@ def mock_astroquery_query(monkeypatch, mock_mpc_response, mock_ned_response, moc
     def mock_ned_query_object(*args, **kwargs):
         return mock_ned_response
 
-    def mock_simbad_query_object(*args, **kwargs):
-        return mock_simbad_response
+    class MockSimbad:
+        def query_object(self, *args, **kwargs):
+            return mock_simbad_response
 
     monkeypatch.setattr(MPC, 'query_objects_async', mock_mcp_query_objects_async)
     monkeypatch.setattr(Ned, 'query_object', mock_ned_query_object)
-    monkeypatch.setattr(Simbad, 'query_object', mock_simbad_query_object)
+    monkeypatch.setattr(simbad2k.SimbadQuery, '_get_simbad_instance', MockSimbad)
 
 
 @pytest.fixture

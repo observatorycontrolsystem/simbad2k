@@ -54,11 +54,17 @@ class PlanetQuery(object):
 
 class SimbadQuery(object):
     def __init__(self, query, scheme):
-        from astroquery.simbad import Simbad
-        self.simbad = Simbad
-        self.simbad.add_votable_fields('pmra', 'pmdec', 'ra(d)', 'dec(d)', 'plx', 'main_id')
+        self.simbad = self._get_simbad_instance()
         self.query = query
         self.scheme = scheme
+
+    def _get_simbad_instance(self):
+        from astroquery.simbad import Simbad
+        # The imported `Simbad` is already an instance of the `SimbadClass`, but we need to create a new instance
+        # of it so that we only add the votable fields once
+        simbad = Simbad()
+        simbad.add_votable_fields('pmra', 'pmdec', 'ra(d)', 'dec(d)', 'plx', 'main_id')
+        return simbad
 
     def get_result(self):
         result = self.simbad.query_object(self.query)
