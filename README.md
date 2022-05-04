@@ -31,30 +31,17 @@ and `mpc_comet`. Examples of three queries are as follows:
 
 ## Development
 
-Create a virtual environment and install app dependencies:
-```
-python3.8 -m venv env3
-source env3/bin/activate
-pip install -r requirements.txt
-pip install -r tests/test_requirements.txt
+```bash
+pip install --upgrade pip
+pip install poetry
+poetry install
 ```
 
-Run the tests:
-```
-pytest
-```
+`poetry install` will create a virtual environment for you, which will have all requirements installed.
+
+Run the tests with `poetry run pytest`.
 
 Run the development server:
 ```
 FLASK_DEBUG=1 FLASK_APP=simbad2k.py flask run
 ```
-
-## Build
-
-This project is built by the [LCO Jenkins Server](http://jenkins.lco.gtn/).
-Please see the [Jenkinsfile](Jenkinsfile) for details.
-
-## Production Deployment
-
-This project is deployed on the LCO Kubernetes Cluster. Please see the
-associated [Helm chart](https://github.com/LCOGT/helm-charts/) for details.

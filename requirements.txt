@@ -1,7 +1,0 @@
-astroquery~=0.4
-astropy>=4.1,<4.2
-flask~=1.1
-Flask-Caching~=1.9
-flask_cors~=3.0
-gunicorn[gevent]==19.9.0
-lcogt-logging~=0.3
