@@ -29,7 +29,7 @@ classifiers=[
 python = "^3.8"
 astroquery = "~0.4"
 astropy = "^5"
-Flask = "~1.1"
+Flask = "^2"
 Flask-Caching = "~1.9"
 Flask-Cors = "~3.0"
 gunicorn = {version = "19.9.0", extras = ["gevent"]}
