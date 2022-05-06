@@ -28,7 +28,7 @@ classifiers=[
 [tool.poetry.dependencies]
 python = "^3.8"
 astroquery = "~0.4"
-astropy = "~4.1"
+astropy = "^5"
 Flask = "~1.1"
 Flask-Caching = "~1.9"
 Flask-Cors = "~3.0"

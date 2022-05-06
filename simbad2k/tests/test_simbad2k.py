@@ -6,7 +6,7 @@ from astropy.table import Table
 from astroquery.mpc import MPC
 from astroquery.ned import Ned
 
-import simbad2k
+from simbad2k import simbad2k
 
 
 @pytest.fixture(autouse=True)
