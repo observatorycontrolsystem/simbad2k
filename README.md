@@ -32,9 +32,9 @@ and `mpc_comet`. Examples of three queries are as follows:
 ## Development
 
 ```bash
-pip install --upgrade pip
-pip install poetry
-poetry install
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+pipx install poetry
 ```
 
 `poetry install` will create a virtual environment for you, which will have all requirements installed.
@@ -43,5 +43,5 @@ Run the tests with `poetry run pytest`.
 
 Run the development server:
 ```
-FLASK_DEBUG=1 FLASK_APP=simbad2k.py flask run
+FLASK_DEBUG=1 FLASK_APP=simbad2k.simbad2k.py poetry run flask run
 ```
