@@ -1,3 +1,11 @@
+## 1.1.0
+2022-05-11
+
+* Open source project
+* Use poetry for dependency management
+* Upgrade docker base image to Python3.10
+* Re-organize project directory
+
 ## 1.0.9
 2019-06-11
 
