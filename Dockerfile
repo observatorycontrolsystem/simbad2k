@@ -1,16 +1,25 @@
-FROM python:3.8-slim
+FROM python:3.10-alpine
+
+SHELL ["/bin/sh", "-c"]
 
 WORKDIR /app
 
+COPY ./pyproject.toml ./poetry.lock ./
+
 # install Python dependencies
-COPY requirements.txt .
-RUN apt update && apt install openssl \
-        && pip install --upgrade 'pip>=19.0.2' \
-        && pip --no-cache-dir install -r requirements.txt \
-        && apt clean
+RUN apk update && apk --no-cache add --virtual .build_deps gcc g++ libffi-dev openssl \
+        && pip install --upgrade pip && pip install poetry \
+        && pip install -r <(poetry export | grep "numpy") \
+        && pip install -r <(poetry export) \
+        && apk --no-cache del .build_deps
 
 # install application
 COPY . .
 
+# Flush logs and handle signals properly
+ENV PYTHONUNBUFFERED=1 PYTHONFAULTHANDLER=1
+
+EXPOSE 5000
+
 # default command
-CMD [ "gunicorn", "--worker-class=gevent", "--bind=0.0.0.0:5000", "--access-logfile=-", "--error-logfile=-", "simbad2k:app" ]
+CMD [ "gunicorn", "--worker-class=gevent", "--bind=0.0.0.0:5000", "--access-logfile=-", "--error-logfile=-", "simbad2k.simbad2k:app" ]

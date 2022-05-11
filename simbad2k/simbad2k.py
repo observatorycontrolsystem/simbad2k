@@ -4,6 +4,7 @@ import hashlib
 import logging
 from logging.config import dictConfig
 import math
+import os
 
 from astroquery.exceptions import RemoteServiceError
 from flask import Flask, jsonify, request
@@ -47,7 +48,7 @@ class PlanetQuery(object):
 
     def get_result(self):
         import json
-        with open('planets.json', 'r') as planets:
+        with open(os.path.join(os.path.dirname(__file__), 'planets.json'), 'r') as planets:
             p_json = json.loads(planets.read())
         return p_json.get(self.query)
 

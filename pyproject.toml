@@ -1,0 +1,44 @@
+[tool.poetry]
+name = "simbad2k"
+version = "1.1.0"
+description = """ 
+              This is a simple web service that returns catalog information for a variety of \
+              objects. It makes use of astroquery as well as some other services.
+              """
+authors = ["Observatory Control System Project <ocs@lco.global>"]
+homepage = "https://observatorycontrolsystem.github.io"
+repository = "https://github.com/observatorycontrolsystem/simbad2k"
+keywords = [
+    "observations",
+    "astronomy",
+    "astrophysics",
+    "cosmology",
+    "science",
+]
+classifiers=[
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Physics"
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+astroquery = "~0.4"
+astropy = "^5"
+Flask = "^2"
+Flask-Caching = "~1.9"
+Flask-Cors = "~3.0"
+gunicorn = {version = "19.9.0", extras = ["gevent"]}
+lcogt-logging = "~0.3"
+MarkupSafe = "2.0.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.0.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
