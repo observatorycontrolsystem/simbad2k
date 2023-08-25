@@ -23,7 +23,7 @@ classifiers=[
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 astroquery = "~0.4"
 astropy = "^5"
 Flask = "^2"
