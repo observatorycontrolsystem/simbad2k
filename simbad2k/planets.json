@@ -20,14 +20,14 @@
         "epoch_jd": 2458217.5
     },
     "mars": {
-        "semimajor_axis": 1.5237578,
-        "eccentricity": 0.0933514,
-        "inclination": 1.8482183,
-        "mean_anomaly": 275.9331564,
-        "argument_of_perihelion": 286.6108154,
-        "ascending_node": 49.5086435,
-        "mean_daily_motion": 0.5239987,
-        "epoch_jd": 2458217.5
+        "semimajor_axis": 1.523697529195890,
+        "eccentricity": 0.09334416606027193,
+        "inclination": 1.847919327404603,
+        "mean_anomaly": 225.1309151389929,
+        "argument_of_perihelion": 286.6396041587725,
+        "ascending_node": 49.48984370080841,
+        "mean_daily_motion": 0.5240298172661463,
+        "epoch_jd": 2460181.5
     },
     "jupiter": {
         "semimajor_axis": 5.2023850,
