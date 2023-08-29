@@ -4,7 +4,7 @@ test_simbad2k.py - Tests for the simbad2k service.
 import pytest
 from astropy.table import Table
 from astroquery.mpc import MPC
-from astroquery.ned import Ned
+from astroquery.ipac.ned import Ned
 
 from simbad2k import simbad2k
 
