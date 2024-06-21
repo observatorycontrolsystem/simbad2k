@@ -114,6 +114,11 @@ class MPCQuery(object):
             schemes = [*self.scheme_mapping]
         for scheme in schemes:
             for query_param in self.query_params_mapping[scheme]:
+                # astroquery has a very robust matching algorythm for "number" and will return elements for 
+                # asteroid #2000 if you ask for "2000 JD1". We do not want to ask for a number when our object name
+                # is actually a preliminary designation. 
+                # Numbered objects will not have a designation.
+                # Comets will have letters in their "numbers" i.e. 12P.
                 if query_param == 'number' and self.scheme_mapping[scheme] == 'asteroid':
                     try:
                         params = {'target_type': self.scheme_mapping[scheme], query_param: int(self.query)}
