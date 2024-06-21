@@ -114,7 +114,13 @@ class MPCQuery(object):
             schemes = [*self.scheme_mapping]
         for scheme in schemes:
             for query_param in self.query_params_mapping[scheme]:
-                params = {'target_type': self.scheme_mapping[scheme], query_param: self.query}
+                if query_param == 'number' and self.scheme_mapping[scheme] == 'asteroid':
+                    try:
+                        params = {'target_type': self.scheme_mapping[scheme], query_param: int(self.query)}
+                    except ValueError:
+                        return None
+                else:
+                    params = {'target_type': self.scheme_mapping[scheme], query_param: self.query}
                 result = MPC.query_objects_async(**params).json()
                 ret_dict = {}
                 if len(result) > 1:
