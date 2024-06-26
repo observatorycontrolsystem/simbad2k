@@ -6,15 +6,6 @@ import urllib.parse
 
 from simbad2k import simbad2k
 
-# TODO: add object_type disambiguation for multiple comet targets (1P) X X
-# TODO: asteroid/moon disambiguation (titania) X X
-# TODO: no primary designation asteroids (2012 FN62) X X
-# TODO: no primary designation comets (C/2020 F3) X X
-# TODO: asteroids with multiple provisional designations, and no primary (2017 UH33) X X
-# TODO: multiple branching for Comets () X
-# TODO: multiple comets (Shoemaker) X
-# TODO: Comet being converted to asteroid (neowise) X
-# TODO: Dual status Asteroid and comet (7968 / 133P) X X
 
 @pytest.fixture(autouse=True)
 def client():
