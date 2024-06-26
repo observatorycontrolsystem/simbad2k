@@ -115,3 +115,15 @@ class TestMPC:
         scheme = 'mpc_minor_planet'
         mpc_response = client.get(f'/{urllib.parse.quote_plus(query)}?target_type=non_sidereal&scheme={scheme}').get_json()
         assert mpc_response['error'] == 'No match found'
+
+
+class TestNED:
+    def test_ned_target(self, client):
+        query  = 'WISEA%20J115959.34+120011.3'
+        expected_name = 'WISEA J115959.34+120011.3'
+        expected_dec = 12.00321
+        expected_ra = 179.99744
+        ned_response = client.get(f'/{query}?target_type=sidereal').get_json()
+        assert ned_response['name'] == expected_name
+        assert ned_response['ra_d'] == expected_ra
+        assert ned_response['dec_d'] == expected_dec

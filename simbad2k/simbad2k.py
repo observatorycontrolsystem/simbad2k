@@ -225,7 +225,7 @@ class NEDQuery(object):
         self.scheme = scheme
 
     def get_result(self):
-        from astroquery.ned import Ned
+        from astroquery.ipac.ned import Ned
         ret_dict = {}
         try:
             result_table = Ned.query_object(self.query)
@@ -233,7 +233,6 @@ class NEDQuery(object):
             return None
         if len(result_table) == 0:
             return None
-        print(result_table)
         ret_dict['ra_d'] = result_table['RA'][0]
         ret_dict['dec_d'] = result_table['DEC'][0]
         ret_dict['name'] = result_table['Object Name'][0]
