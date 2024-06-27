@@ -288,7 +288,7 @@ def index():
                     'For non_sidereal targets, you must include scheme, which can be '
                     'either mpc_minor_planet or mpc_comet.'
                     'Ex: <a href="/103P?target_type=non_sidereal&scheme=mpc_comet">'
-                    '/m51?target_type=sidereal&scheme=mpc_comet</a>')
+                    '/103P?target_type=non_sidereal&scheme=mpc_comet</a>')
     return instructions
 
 
