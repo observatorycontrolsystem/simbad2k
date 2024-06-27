@@ -115,17 +115,17 @@ class MPCQuery(object):
                 value = None
             cleaned_result[key] = value
         # Build object name from returned Data
-        if result['number']:
-            if result.get('name',None):
+        if result.get('number'):
+            if result.get('name'):
                 # If there is a number and a name, use both with the format "name (number)", otherwise just use number
                 cleaned_result['name'] = f"{result['name']} ({result['number']})"
             else:
                 cleaned_result['name'] = f"{result['number']}"
-                if result.get('object_type', None):
+                if result.get('object_type'):
                     # Add comet object type if it exists
                     cleaned_result['name'] += result['object_type']
         else:
-            cleaned_result['name'] = result['designation']
+            cleaned_result['name'] = result.get('designation')
         return cleaned_result
 
     def get_primary_designation(self):
@@ -141,7 +141,7 @@ class MPCQuery(object):
         response = requests.get("https://data.minorplanetcenter.net/api/query-identifier",
                                 data=self.query.replace("+", " "))
         identifications = response.json()
-        if identifications['disambiguation_list']:
+        if identifications.get('disambiguation_list'):
             for target in identifications['disambiguation_list']:
                 if self.scheme_mapping[self.scheme] == 'asteroid':
                     try:
@@ -149,9 +149,10 @@ class MPCQuery(object):
                     except (ValueError, KeyError):
                         continue
                 elif self.scheme_mapping[self.scheme] == 'comet':
-                    if target.get('permid', None) :
-                        return target.get('permid', None), None
-                if target.get('unpacked_primary_provisional_designation', None):
+                    perm_id = target.get('permid')
+                    if perm_id:
+                        return perm_id, None
+                if target.get('unpacked_primary_provisional_designation'):
                     # We need to re-check preliminary designations for multiple targets because these are sometimes
                     # returned by the MPC for disambiguation even though the targets have primary IDs
                     response = requests.get("https://data.minorplanetcenter.net/api/query-identifier",
@@ -188,7 +189,7 @@ class MPCQuery(object):
             # 1. When the search is for a comet and there are multiple types with the same number (e.g. 1P/1I)
             # 2. When the search has multiple sets of elements with different epochs
             if len(result) > 1:
-                # Limit results to those that mach the object type
+                # Limit results to those that match the object type
                 results_that_match_query_type = [elements for elements in result
                                                  if elements.get('object_type', '').lower() in self.query.lower()]
                 if results_that_match_query_type:
