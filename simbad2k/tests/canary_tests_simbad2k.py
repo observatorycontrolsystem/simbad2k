@@ -53,6 +53,14 @@ class TestMPC:
         mpc_response = client.get(f'/{urllib.parse.quote_plus(query)}?target_type=non_sidereal&scheme={scheme}').get_json()
         assert mpc_response['name'] == expected_name
 
+    def test_preliminary_comet_with_lower_case_type(self, client):
+        query  = '13p'
+        scheme = 'mpc_comet'
+        expected_name = '13P'
+        mpc_response = client.get(f'/{urllib.parse.quote_plus(query)}?target_type=non_sidereal&scheme={scheme}').get_json()
+        assert mpc_response['name'] == expected_name
+
+
     def test_named_asteroid_with_same_name_as_moon(self, client):
         query  = 'Titania'
         scheme = 'mpc_minor_planet'

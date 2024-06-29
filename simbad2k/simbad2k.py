@@ -139,7 +139,7 @@ class MPCQuery(object):
             * If no 'permid' is found, query the MPC again using the first target with a preliminary designation.
         """
         response = requests.get("https://data.minorplanetcenter.net/api/query-identifier",
-                                data=self.query.replace("+", " "))
+                                data=self.query.replace("+", " ").upper())
         identifications = response.json()
         if identifications.get('disambiguation_list'):
             for target in identifications['disambiguation_list']:
