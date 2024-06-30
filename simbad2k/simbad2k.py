@@ -100,6 +100,7 @@ class MPCQuery(object):
         self.query_params_mapping = {
             'mpc_minor_planet': ['name', 'designation', 'number'], 'mpc_comet': ['number', 'designation']
         }
+        self.mpc_type_mapping = {'mpc_minor_planet': [0,1,6,20], 'mpc_comet': [6,10,11,20,50]}
         self.scheme = scheme
 
     def _clean_result(self, result):
@@ -141,6 +142,9 @@ class MPCQuery(object):
         response = requests.get("https://data.minorplanetcenter.net/api/query-identifier",
                                 data=self.query.replace("+", " ").upper())
         identifications = response.json()
+        if identifications.get('object_type') and\
+                identifications.get('object_type')[1] not in self.mpc_type_mapping[self.scheme]:
+            return None, None
         if identifications.get('disambiguation_list'):
             for target in identifications['disambiguation_list']:
                 if self.scheme_mapping[self.scheme] == 'asteroid':
@@ -180,8 +184,10 @@ class MPCQuery(object):
                     except ValueError:
                         return None
                 params = {'target_type': self.scheme_mapping[scheme], 'number': primary_designation}
+                designation = primary_designation
             elif primary_provisional_designation:
                 params = {'target_type': self.scheme_mapping[scheme], 'designation': primary_provisional_designation}
+                designation = primary_provisional_designation
             else:
                 return None
             result = MPC.query_objects_async(**params).json()
@@ -191,7 +197,7 @@ class MPCQuery(object):
             if len(result) > 1:
                 # Limit results to those that match the object type
                 results_that_match_query_type = [elements for elements in result
-                                                 if elements.get('object_type', '').lower() in self.query.lower()]
+                                                 if elements.get('object_type', '').lower() in designation.lower()]
                 if results_that_match_query_type:
                     result = results_that_match_query_type
             if len(result) > 1:

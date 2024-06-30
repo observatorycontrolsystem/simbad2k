@@ -60,7 +60,6 @@ class TestMPC:
         mpc_response = client.get(f'/{urllib.parse.quote_plus(query)}?target_type=non_sidereal&scheme={scheme}').get_json()
         assert mpc_response['name'] == expected_name
 
-
     def test_named_asteroid_with_same_name_as_moon(self, client):
         query  = 'Titania'
         scheme = 'mpc_minor_planet'
@@ -118,6 +117,12 @@ class TestMPC:
     def test_giberish_name(self, client):
         query  = '1234notarock'
         scheme = 'mpc_minor_planet'
+        mpc_response = client.get(f'/{urllib.parse.quote_plus(query)}?target_type=non_sidereal&scheme={scheme}').get_json()
+        assert mpc_response['error'] == 'No match found'
+
+    def test_asteroid_name_for_comet_elements(self, client):
+        query  = 'Vesta'
+        scheme = 'mpc_comet'
         mpc_response = client.get(f'/{urllib.parse.quote_plus(query)}?target_type=non_sidereal&scheme={scheme}').get_json()
         assert mpc_response['error'] == 'No match found'
 
