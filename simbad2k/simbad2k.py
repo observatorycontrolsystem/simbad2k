@@ -100,6 +100,8 @@ class MPCQuery(object):
         self.query_params_mapping = {
             'mpc_minor_planet': ['name', 'designation', 'number'], 'mpc_comet': ['number', 'designation']
         }
+        # Object types as described by the MPC: https://www.minorplanetcenter.net/mpcops/documentation/object-types/
+        # 50 is for Interstellar Objects
         self.mpc_type_mapping = {'mpc_minor_planet': [0,1,6,20], 'mpc_comet': [6,10,11,20,50]}
         self.scheme = scheme
 
