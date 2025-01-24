@@ -65,7 +65,7 @@ class SimbadQuery(object):
         # The imported `Simbad` is already an instance of the `SimbadClass`, but we need to create a new instance
         # of it so that we only add the votable fields once
         simbad = Simbad()
-        simbad.add_votable_fields('pmra', 'pmdec', 'ra(d)', 'dec(d)', 'plx', 'main_id')
+        simbad.add_votable_fields('pmra', 'pmdec', 'ra', 'dec', 'plx_value', 'main_id')
         return simbad
 
     def get_result(self):
@@ -150,14 +150,21 @@ class MPCQuery(object):
         if identifications.get('disambiguation_list'):
             for target in identifications['disambiguation_list']:
                 if self.scheme_mapping[self.scheme] == 'asteroid':
+                    # If the Target is an asteroid, then the PermID should be an integer
                     try:
                         return int(target['permid']), None
-                    except (ValueError, KeyError):
+                    except (ValueError, KeyError, TypeError):
                         continue
                 elif self.scheme_mapping[self.scheme] == 'comet':
+                    # If the Target is a comet, then the PermID should contain a letter (P/C/I)
                     perm_id = target.get('permid')
                     if perm_id:
-                        return perm_id, None
+                        try:
+                            # If the PermID is an integer, then it is not a comet, so we keep looking
+                            int(target['permid'])
+                            continue
+                        except (ValueError, KeyError, TypeError):
+                            return perm_id, None
                 if target.get('unpacked_primary_provisional_designation'):
                     # We need to re-check preliminary designations for multiple targets because these are sometimes
                     # returned by the MPC for disambiguation even though the targets have primary IDs
