@@ -150,14 +150,17 @@ class MPCQuery(object):
         if identifications.get('disambiguation_list'):
             for target in identifications['disambiguation_list']:
                 if self.scheme_mapping[self.scheme] == 'asteroid':
+                    # If the Target is an asteroid, then the PermID should be an integer
                     try:
                         return int(target['permid']), None
                     except (ValueError, KeyError, TypeError):
                         continue
                 elif self.scheme_mapping[self.scheme] == 'comet':
+                    # If the Target is a comet, then the PermID should contain a letter (P/C/I)
                     perm_id = target.get('permid')
                     if perm_id:
                         try:
+                            # If the PermID is an integer, then it is not a comet, so we keep looking
                             int(target['permid'])
                             continue
                         except (ValueError, KeyError, TypeError):
