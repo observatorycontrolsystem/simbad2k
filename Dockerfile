@@ -8,9 +8,9 @@ COPY ./pyproject.toml ./poetry.lock ./
 
 # install Python dependencies
 RUN apk update && apk --no-cache add --virtual .build_deps gcc g++ libffi-dev openssl \
-        && pip install --upgrade pip && pip install poetry \
-        && pip install -r <(poetry export | grep "numpy") \
-        && pip install -r <(poetry export) \
+        && pip install --upgrade pip && pip install poetry==2.0 \
+        && poetry config virtualenvs.create false \
+        && poetry install --no-interaction  --no-root \
         && apk --no-cache del .build_deps
 
 # install application
