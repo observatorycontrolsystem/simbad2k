@@ -43,8 +43,9 @@ def mock_simbad_response():
     # Return an astroquery Simbad response that has no results, where results can be added in the tests. The astroquery
     # Simbad query returns an astropy.table.Table
     table = Table(
-        names=('RA', 'DEC', 'RA_d', 'DEC_d', 'PMRA', 'PMDEC', 'PLX_VALUE', 'MAIN_ID'),
-        dtype=('S', 'S', 'f8', 'f8', 'f8', 'f8', 'f8', 'S')
+        names=('main_id', 'ra', 'dec', 'coo_err_maj', 'coo_err_min', 'coo_err_angle', 'coo_wavelength', 'coo_bibcode',
+               'pmdec', 'plx_value', 'pmra', 'matched_id'),
+        dtype=('S', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'S', 'f8', 'f8', 'f8', 'S')
     )
     return table
 
@@ -75,14 +76,12 @@ def mock_astroquery_query(monkeypatch, mock_mpc_response, mock_ned_response, moc
 @pytest.fixture
 def m88_simbad_table_row():
     return {
-        'RA': '12 31 59.216',
-        'DEC': '+14 25 13.48',
-        'RA_d': '187.996733',
-        'DEC_d': '14.420411',
-        'PMRA': None,
-        'PMDEC': None,
-        'PLX_VALUE': None,
-        'MAIN_ID': 'M  88'
+        'ra': 187.996733,
+        'dec': 14.420411,
+        'pmra': None,
+        'pmdec': None,
+        'plx_value': None,
+        'main_id': 'M  88'
     }
 
 
@@ -136,9 +135,9 @@ def test_sidereal_simbad_target(client, mock_simbad_response, m88_simbad_table_r
     response = client.get('/m88?target_type=sidereal')
     assert response.is_json
     response_json = response.get_json()
-    assert response_json['ra'] == m88_simbad_table_row['RA']
-    assert response_json['dec'] == m88_simbad_table_row['DEC']
-    assert response_json['name'] == m88_simbad_table_row['MAIN_ID']
+    assert response_json['ra'] == m88_simbad_table_row['ra']
+    assert response_json['dec'] == m88_simbad_table_row['dec']
+    assert response_json['name'] == m88_simbad_table_row['main_id']
 
 
 def test_successfully_retrieved_result_is_cached(client, mock_simbad_response, m88_simbad_table_row):
