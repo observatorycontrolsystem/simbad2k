@@ -72,7 +72,7 @@ class SimbadQuery(object):
         result = self.simbad.query_object(self.query)
         if result:
             ret_dict = {}
-            for key in ['RA', 'DEC', 'RA_d', 'DEC_d', 'PMRA', 'PMDEC', 'PLX_VALUE', 'MAIN_ID']:
+            for key in ['pmra', 'pmdec', 'ra', 'dec', 'plx_value', 'main_id']:
                 if str(result[key][0]) not in ['--', '']:
                     ret_dict[key.lower()] = result[key][0]
             if ret_dict.get('main_id'):

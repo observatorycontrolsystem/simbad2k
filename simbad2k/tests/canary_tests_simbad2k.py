@@ -20,6 +20,49 @@ def client():
     simbad2k.cache.clear()
 
 
+class TestSimbad:
+    def test_random_star(self, client):
+        query  = 'HD 289002'
+        expected_name = 'HD 289002'
+        expected_ra = 101.30571895498
+        expected_dec = 2.13741256961
+        expected_paralax = 0.4561
+        precision = 3 # make sure the position is good to ~1 arcsecond
+        simbad_response = client.get(f'/{query}?target_type=sidereal').json
+        assert simbad_response['name'] == expected_name
+        assert round(simbad_response['ra'], precision) == round(expected_ra, precision)
+        assert round(simbad_response['dec'], precision) == round(expected_dec, precision)
+        assert round(simbad_response['plx_value'], precision) == round(expected_paralax, precision)
+
+
+    def test_named_star(self, client):
+        query  = 'Polaris'
+        expected_name = '* alf UMi'
+        expected_ra = 37.95456067018985
+        expected_dec = 89.26410896994187
+        expected_paralax = 7.54
+        precision = 3 # make sure the position is good to ~1 arcsecond
+        simbad_response = client.get(f'/{query}?target_type=sidereal').json
+        assert simbad_response['name'] == expected_name
+        assert round(simbad_response['ra'], precision) == round(expected_ra, precision)
+        assert round(simbad_response['dec'], precision) == round(expected_dec, precision)
+        assert round(simbad_response['plx_value'], precision) == round(expected_paralax, precision)
+
+
+    def test_messier_object(self, client):
+        query  = 'M55'
+        expected_name = 'M  55'
+        expected_ra = 294.9987916666667
+        expected_dec = -30.96475
+        expected_paralax = 0.209
+        precision = 3  # make sure the position is good to ~1 arcsecond
+        simbad_response = client.get(f'/{query}?target_type=sidereal').json
+        assert simbad_response['name'] == expected_name
+        assert round(simbad_response['ra'], precision) == round(expected_ra, precision)
+        assert round(simbad_response['dec'], precision) == round(expected_dec, precision)
+        assert round(simbad_response['plx_value'], precision) == round(expected_paralax, precision)
+
+
 class TestMPC:
     def test_named_asteroid(self, client):
         query  = 'Ceres'
