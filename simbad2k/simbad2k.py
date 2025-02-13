@@ -78,6 +78,10 @@ class SimbadQuery(object):
             if ret_dict.get('main_id'):
                 ret_dict['name'] = ret_dict['main_id']
                 del ret_dict['main_id']
+            # Earlier versions of Simbad returned both sexagesimal and decimal coordinates. We return ra_d and dec_d
+            # to maintain backwards compatibility with the old API.
+            ret_dict['ra_d'] = ret_dict['ra']
+            ret_dict['dec_d'] = ret_dict['dec']
             return ret_dict
         return None
 
