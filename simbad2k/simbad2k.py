@@ -17,7 +17,7 @@ from lcogt_logging import LCOGTFormatter
 from pyvo.dal.exceptions import DALServiceError
 
 config = {
-    'CACHE_TYPE': 'simple',
+    'CACHE_TYPE': 'SimpleCache',
     'CACHE_DEFAULT_TIMEOUT': 60 * 60 * 60
 }
 
