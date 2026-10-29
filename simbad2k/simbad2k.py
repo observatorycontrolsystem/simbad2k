@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from datetime import datetime
+import functools
 import hashlib
 import logging
 from logging.config import dictConfig
@@ -8,10 +9,12 @@ import os
 import requests
 
 from astroquery.exceptions import RemoteServiceError
+from astroquery.simbad import conf as simbad_conf
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_caching import Cache
 from lcogt_logging import LCOGTFormatter
+from pyvo.dal.exceptions import DALServiceError
 
 config = {
     'CACHE_TYPE': 'simple',
@@ -55,21 +58,42 @@ class PlanetQuery(object):
 
 
 class SimbadQuery(object):
+    # The SIMBAD servers are mirrors of each other, so keep using whichever one last worked and only switch to the
+    # next one when it stops responding
+    current_server = simbad_conf.server
+    # Setting up a Simbad instance takes several requests to the server, so set up one instance per server and reuse it
+    simbad_instances = {}
+
     def __init__(self, query, scheme):
-        self.simbad = self._get_simbad_instance()
         self.query = query
         self.scheme = scheme
 
-    def _get_simbad_instance(self):
-        from astroquery.simbad import Simbad
-        # The imported `Simbad` is already an instance of the `SimbadClass`, but we need to create a new instance
-        # of it so that we only add the votable fields once
-        simbad = Simbad()
-        simbad.add_votable_fields('pmra', 'pmdec', 'ra', 'dec', 'plx_value', 'main_id')
-        return simbad
+    def _get_simbad_instance(self, server):
+        if server not in SimbadQuery.simbad_instances:
+            from astroquery.simbad import Simbad
+            # The imported `Simbad` is already an instance of the `SimbadClass`, but we need to create a new instance
+            # of it so that we only add the votable fields once
+            simbad = Simbad()
+            simbad.server = server
+            # pyvo makes most requests without a timeout, so without a connect timeout an unreachable server hangs
+            # each request for minutes
+            simbad._session.request = functools.partial(simbad._session.request, timeout=(5, None))
+            simbad.add_votable_fields('pmra', 'pmdec', 'ra', 'dec', 'plx_value', 'main_id')
+            SimbadQuery.simbad_instances[server] = simbad
+        return SimbadQuery.simbad_instances[server]
 
     def get_result(self):
-        result = self.simbad.query_object(self.query)
+        result = None
+        servers = simbad_conf.servers_list
+        start = servers.index(SimbadQuery.current_server)
+        for server in servers[start:] + servers[:start]:
+            try:
+                result = self._get_simbad_instance(server).query_object(self.query)
+            except (DALServiceError, requests.RequestException) as e:
+                logger.log(msg=f'SIMBAD server {server} is unavailable: {e}', level=logging.WARNING)
+                continue
+            SimbadQuery.current_server = server
+            break
         if result:
             ret_dict = {}
             for key in ['pmra', 'pmdec', 'ra', 'dec', 'plx_value', 'main_id']:
