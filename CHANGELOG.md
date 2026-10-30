@@ -1,3 +1,9 @@
+## 1.5.4
+2026-10-30
+
+* Add memory of which simbad mirror worked recently and use that
+* Reduce number of simbad initialization calls
+
 ## 1.1.0
 2022-05-11
 

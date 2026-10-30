@@ -1,6 +1,6 @@
 [project]
 name = "simbad2k"
-version = "1.5.0"
+version = "1.5.4"
 description = "This is a simple web service that returns catalog information for a variety of objects. It makes use of astroquery as well as some other services."
 authors = [{name = "Observatory Control System Project", email = "<ocs@lco.global>"}]
 homepage = "https://observatorycontrolsystem.github.io"
