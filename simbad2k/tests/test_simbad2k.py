@@ -2,11 +2,16 @@
 test_simbad2k.py - Tests for the simbad2k service.
 """
 import pytest
+import requests
 from astropy.table import Table
 from astroquery.mpc import MPC
 from astroquery.ipac.ned import Ned
+from astroquery.simbad import SimbadClass
 
 from simbad2k import simbad2k
+
+CDS = 'simbad.cds.unistra.fr'
+HARVARD = 'simbad.harvard.edu'
 
 
 @pytest.fixture(autouse=True)
@@ -65,12 +70,42 @@ def mock_astroquery_query(monkeypatch, mock_mpc_response, mock_ned_response, moc
         return mock_ned_response
 
     class MockSimbad:
+        def __init__(self, server):
+            pass
+
         def query_object(self, *args, **kwargs):
             return mock_simbad_response
 
     monkeypatch.setattr(MPC, 'query_objects_async', mock_mcp_query_objects_async)
     monkeypatch.setattr(Ned, 'query_object', mock_ned_query_object)
     monkeypatch.setattr(simbad2k.SimbadQuery, '_get_simbad_instance', MockSimbad)
+
+
+@pytest.fixture
+def simbad_servers(monkeypatch, mock_simbad_response, m88_simbad_table_row):
+    """Use the real SimbadQuery._get_simbad_instance against mock SIMBAD servers that return M88. Servers in `down`
+    fail to connect, and every call made to a server is recorded in `contacted` as a (method, server) tuple."""
+    monkeypatch.undo()
+    mock_simbad_response.add_row(m88_simbad_table_row)
+    servers = {'down': set(), 'contacted': []}
+
+    def contact_server(method, server):
+        servers['contacted'].append((method, server))
+        if server in servers['down']:
+            raise requests.ConnectTimeout(f'Connection to {server} timed out')
+
+    def mock_add_votable_fields(self, *args):
+        contact_server('add_votable_fields', self.server)
+
+    def mock_query_object(self, *args, **kwargs):
+        contact_server('query_object', self.server)
+        return mock_simbad_response
+
+    monkeypatch.setattr(SimbadClass, 'add_votable_fields', mock_add_votable_fields)
+    monkeypatch.setattr(SimbadClass, 'query_object', mock_query_object)
+    monkeypatch.setattr(simbad2k.SimbadQuery, 'current_server', CDS)
+    monkeypatch.setattr(simbad2k.SimbadQuery, 'simbad_instances', {})
+    return servers
 
 
 @pytest.fixture
@@ -180,3 +215,49 @@ def test_mpc_result_field_as_null_does_not_crash(client, mock_mpc_response, come
     response = client.get('/29P?target_type=non_sidereal&scheme=mpc_comet')
     assert response.status_code == 200
     assert response.get_json()['mean_anomaly'] is None
+
+
+def test_simbad_instance_is_set_up_once_and_reused(simbad_servers):
+    assert simbad2k.SimbadQuery('m88', '').get_result()['name'] == 'M  88'
+    assert simbad2k.SimbadQuery('m88', '').get_result()['name'] == 'M  88'
+    assert simbad_servers['contacted'] == [
+        ('add_votable_fields', CDS), ('query_object', CDS), ('query_object', CDS)
+    ]
+
+
+def test_simbad_switches_server_and_stops_contacting_down_server(simbad_servers):
+    simbad_servers['down'].add(CDS)
+    assert simbad2k.SimbadQuery('m88', '').get_result()['name'] == 'M  88'
+    assert simbad2k.SimbadQuery('m88', '').get_result()['name'] == 'M  88'
+    assert simbad_servers['contacted'] == [
+        ('add_votable_fields', CDS), ('add_votable_fields', HARVARD), ('query_object', HARVARD),
+        ('query_object', HARVARD)
+    ]
+
+
+def test_simbad_switches_server_when_query_to_set_up_server_fails(simbad_servers):
+    simbad2k.SimbadQuery('m88', '').get_result()
+    simbad_servers['down'].add(CDS)
+    assert simbad2k.SimbadQuery('m88', '').get_result()['name'] == 'M  88'
+    assert simbad2k.SimbadQuery.current_server == HARVARD
+
+
+def test_simbad_keeps_using_new_server_after_original_server_recovers(simbad_servers):
+    simbad_servers['down'].add(CDS)
+    simbad2k.SimbadQuery('m88', '').get_result()
+    simbad_servers['down'].clear()
+    simbad2k.SimbadQuery('m88', '').get_result()
+    assert simbad_servers['contacted'][-1] == ('query_object', HARVARD)
+
+
+def test_simbad_switches_back_when_new_server_goes_down(simbad_servers):
+    simbad_servers['down'].add(CDS)
+    simbad2k.SimbadQuery('m88', '').get_result()
+    simbad_servers['down'] = {HARVARD}
+    assert simbad2k.SimbadQuery('m88', '').get_result()['name'] == 'M  88'
+    assert simbad2k.SimbadQuery.current_server == CDS
+
+
+def test_simbad_returns_no_result_when_all_servers_are_down(simbad_servers):
+    simbad_servers['down'].update([CDS, HARVARD])
+    assert simbad2k.SimbadQuery('m88', '').get_result() is None

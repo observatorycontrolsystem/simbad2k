@@ -17,27 +17,28 @@ classifiers=[
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Astronomy",
     "Topic :: Scientific/Engineering :: Physics"
 ]
-requires-python = ">=3.9.0,<3.11.0"
+requires-python = ">=3.10.0,<3.13.0"
 dependencies = [
-    "astroquery >=0.4,<0.5",
-    "astropy >=5,<6",
-    "Flask >=2,<3",
-    "Flask-Caching >=1.9,<1.10",
-    "Flask-Cors >=3.0,<=3.1",
+    "astroquery >=0.4.11,<0.5",
+    "astropy >=6.1,<7",
+    "Flask >=3.1,<4",
+    "Flask-Caching >=2.4,<2.5",
+    "Flask-Cors >=6.0,<7",
     "lcogt-logging >=0.3,<0.4",
-    "MarkupSafe ==2.0.1",
-    "gunicorn[gevent] ==19.9.0"
+    "gunicorn[gevent] >=26,<27"
 ]
 
 #[tool.poetry.dependencies]
 #gunicorn = {version = "19.9.0", extras = ["gevent"]}
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.0.0"
+pytest = "^9.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
