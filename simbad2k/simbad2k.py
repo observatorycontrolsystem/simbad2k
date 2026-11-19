@@ -58,9 +58,16 @@ class PlanetQuery(object):
 
 
 class SimbadQuery(object):
+    # Ensure the idia mirror is always the first to be attempted, until the bot situation improves.
+    preferred_server = "simbad.idia.ac.za"
+    try:
+        simbad_conf.servers_list.remove(preferred_server)
+    except ValueError:
+        pass
+    simbad_conf.servers_list.insert(0, preferred_server)
     # The SIMBAD servers are mirrors of each other, so keep using whichever one last worked and only switch to the
     # next one when it stops responding
-    current_server = simbad_conf.server
+    current_server = preferred_server
     # Setting up a Simbad instance takes several requests to the server, so set up one instance per server and reuse it
     simbad_instances = {}
 
@@ -93,6 +100,7 @@ class SimbadQuery(object):
                 logger.log(msg=f'SIMBAD server {server} is unavailable: {e}', level=logging.WARNING)
                 continue
             SimbadQuery.current_server = server
+            logger.log(msg=f'Selecting mirror: {server}', level=logging.INFO)
             break
         if result:
             ret_dict = {}
