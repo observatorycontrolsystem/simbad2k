@@ -286,7 +286,7 @@ class NEDQuery(object):
         if len(result_table) == 0:
             return None
         ret_dict['ra_d'] = result_table['RA'][0]
-        ret_dict['dec_d'] = result_table['DEC'][0]
+        ret_dict['dec_d'] = result_table['Dec'][0]
         ret_dict['name'] = result_table['Object Name'][0]
         return ret_dict
 
