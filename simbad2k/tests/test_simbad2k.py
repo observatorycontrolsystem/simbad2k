@@ -12,6 +12,7 @@ from simbad2k import simbad2k
 
 CDS = 'simbad.cds.unistra.fr'
 HARVARD = 'simbad.harvard.edu'
+IDIA = 'simbad.idia.ac.za'
 
 
 @pytest.fixture(autouse=True)
@@ -251,13 +252,13 @@ def test_simbad_keeps_using_new_server_after_original_server_recovers(simbad_ser
 
 
 def test_simbad_switches_back_when_new_server_goes_down(simbad_servers):
-    simbad_servers['down'].add(CDS)
+    simbad_servers['down'].update([CDS, IDIA])
     simbad2k.SimbadQuery('m88', '').get_result()
     simbad_servers['down'] = {HARVARD}
     assert simbad2k.SimbadQuery('m88', '').get_result()['name'] == 'M  88'
-    assert simbad2k.SimbadQuery.current_server == CDS
+    assert simbad2k.SimbadQuery.current_server != HARVARD
 
 
 def test_simbad_returns_no_result_when_all_servers_are_down(simbad_servers):
-    simbad_servers['down'].update([CDS, HARVARD])
+    simbad_servers['down'].update([IDIA, CDS, HARVARD])
     assert simbad2k.SimbadQuery('m88', '').get_result() is None
